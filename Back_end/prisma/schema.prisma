@@ -8,26 +8,247 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model WhatIfCase {
+  caseId           String   @id
+  description      String?
+  assumptions      Json?
+  predictedOutcome Json?
+  impactScore      Float?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  email     String   @unique
-  password  String
-  roleid    Int
+  id       Int      @id @default(autoincrement())
+  username String   @unique
+  email    String   @unique
+  password String
+  roleid   Int
+  role     Role     @relation(fields: [roleid], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  role      Role     @relation(fields: [roleid], references: [id])
+  reports  Report[]
+  alerts   Alert[]
 
   @@map("users")
 }
 
 model Role {
   id        Int      @id @default(autoincrement())
-  name      String   @unique
+  name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   users     User[]
 
-  @@map("roles")
+    @@map("roles")
+}
+
+model Transaction {
+  id              Int      @id @default(autoincrement())
+  transactionType String?
+  productId       Int
+  quantity        Decimal
+  transactionDate DateTime
+  product         Product  @relation(fields: [productId], references: [id])
+}
+
+model SupplyPlan {
+  id              Int       @id @default(autoincrement())
+  productId       Int
+  supplierId      Int
+  plannedQuantity Int
+  actualQuantity  Int
+  status          String?
+  deadline        DateTime?
+  product         Product   @relation(fields: [productId], references: [id])
+  supplier        Supplier  @relation(fields: [supplierId], references: [id])
+}
+
+model Supplier {
+  id               Int          @id @default(autoincrement())
+  name             String?
+  contactInfo      String?
+  address          String?
+  leadTime         Int?
+  reliabilityScore Decimal?
+  paymentTerms     String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  supplyPlans      SupplyPlan[]
+  components       Component[]
+}
+
+model Scenario {
+  scenarioId   String @id
+  description  String?
+  impactScore  Float?
+}
+
+model Report {
+  id          Int      @id @default(autoincrement())
+  reportName  String?
+  data        String?
+  generatedAt DateTime?
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Product {
+  id              Int               @id @default(autoincrement())
+  sku             String?
+  name            String?
+  categoryId      Int
+  manufacturerId  Int
+  unitPrice       Decimal?
+  productionCost  Decimal?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  category        Category          @relation(fields: [categoryId], references: [id])
+  manufacturer    Manufacturer      @relation(fields: [manufacturerId], references: [id])
+  inventories     Inventory[]
+  demandForecasts DemandForecast[]
+  supplyPlans     SupplyPlan[]
+  customerOrders  CustomerOrder[]
+  distributions   Distribution[]
+  components      BillOfMaterials[]
+  transactions    Transaction[]
+}
+
+model PrescriptiveAction {
+  actionId String @id
+  type     String?
+  cost     Float?
+  benefit  Float?
+}
+
+model Manufacturer {
+  id          Int       @id @default(autoincrement())
+  name        String?
+  contactInfo String?
+  address     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+model IoTDevice {
+  deviceId String @id
+  type     String?
+  status   String?
+}
+
+model Inventory {
+  id           Int      @id @default(autoincrement())
+  productId    Int
+  location     String?
+  currentStock Int?
+  safetyStock  Int?
+  reorderPoint Int?
+  lastUpdated  DateTime?
+  product      Product  @relation(fields: [productId], references: [id])
+}
+
+model InternalData {
+  dataId      String @id
+  fileName    String?
+  fileType    String?
+  fileContent String?
+}
+
+model FinancialRecord {
+  id         Int      @id @default(autoincrement())
+  recordType String?
+  amount     Decimal?
+  recordDate DateTime?
+}
+
+model ExternalData {
+  externalDataId String @id
+  sourceType     String?
+  rawData        Json?
+  processedData  Json?
+}
+
+model Distribution {
+  id               Int      @id @default(autoincrement())
+  productId        Int
+  channel          String?
+  region           String?
+  distributionDate DateTime?
+  quantity         Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  product          Product  @relation(fields: [productId], references: [id])
+}
+
+model DemandForecast {
+  id               Int      @id @default(autoincrement())
+  productId        Int
+  region           String?
+  periodStart      DateTime?
+  periodEnd        DateTime?
+  baseQuantity     Int?
+  adjustedQuantity Int?
+  confidenceLevel  Decimal?
+  createdAt        DateTime @default(now())
+  product          Product  @relation(fields: [productId], references: [id])
+}
+
+model CustomerOrder {
+  id         Int       @id @default(autoincrement())
+  customerId Int?
+  productId  Int
+  quantity   Int?
+  orderDate  DateTime?
+  dueDate    DateTime?
+  status     String?
+  product    Product   @relation(fields: [productId], references: [id])
+}
+
+model Component {
+  id          Int               @id @default(autoincrement())
+  name        String?
+  description String?
+  cost        Decimal?
+  supplierId  Int
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  supplier    Supplier          @relation(fields: [supplierId], references: [id])
+  products    BillOfMaterials[]
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String?
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+model BillOfMaterials {
+  id          Int       @id @default(autoincrement())
+  productId   Int
+  componentId Int
+  quantity    Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  product     Product   @relation(fields: [productId], references: [id])
+  component   Component @relation(fields: [componentId], references: [id])
+}
+
+model Alert {
+  alertId   String   @id
+  severity  String?
+  message   String?
+  timestamp DateTime?
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model AIEngine {
+  modelId      String @id
+  modelType    String?
+  trainingData Json?
 }
 
