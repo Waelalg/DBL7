@@ -22,7 +22,10 @@
     "mongoose": "^8.10.0",
     "nodemon": "^3.1.9",
     "pg": "^8.13.1",
-    "sequelize": "^6.37.5"
+    "sequelize": "^6.37.5",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "uuidv4": "^6.2.13"
   },
   "devDependencies": {
     "prisma": "^6.3.1"
