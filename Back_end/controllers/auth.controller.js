@@ -6,7 +6,7 @@ const User = require('../models/User'); // Ensure the path is correct
 exports.signup = async (req, res) => {
     try {
         const { username, email, password, roleid } = req.body;
-
+        console.log(username,email,password,roleid);
         // Ensure all fields are provided
         if (!username || !email || !password || !roleid) {
             return res.status(400).send({ message: 'All fields are required.' });
@@ -53,7 +53,7 @@ exports.signin = async (req, res) => {
         if (!user) {
             return res.status(404).send({ message: 'User not found.' });
         }
-
+        console.log(user)
         // Compare passwords
         const passwordIsValid = bcrypt.compareSync(password, user.password);
         if (!passwordIsValid) {
@@ -64,7 +64,7 @@ exports.signin = async (req, res) => {
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
             expiresIn: 86400, // 24 hours
         });
-
+        console.log("token",token)
         res.status(200).send({
             message: 'Signin successful!',
             user: {
